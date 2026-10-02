@@ -55,7 +55,15 @@ export function renderDesign(ctx,s,img,{guides=false,bleed=true}={}){
  if(s.border>0){ctx.save();ctx.lineWidth=s.border;ctx.strokeStyle=s.borderColor;shape(ctx,s,b+s.border/2,b+s.border/2,s.width-s.border,s.height-s.border);ctx.stroke();ctx.restore();}
  if(s.caption){ctx.font=`600 ${s.fontSize}px "Noto Sans SC",system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=s.textColor;ctx.fillText(s.caption,b+s.width/2,b+s.height*s.textY/100);}
  ctx.restore();
- if(guides){ctx.save();ctx.scale(ctx.canvas.width/d.width,ctx.canvas.height/d.height);const line=d.width/650,bleedLine=d.width/180,inset=bleedLine;ctx.setLineDash([]);shape(ctx,s,inset,inset,d.width-2*inset,d.height-2*inset,b);ctx.strokeStyle='#171c2b';ctx.lineWidth=bleedLine*2;ctx.stroke();ctx.strokeStyle='#ff4fa3';ctx.lineWidth=bleedLine;ctx.stroke();ctx.lineWidth=line;ctx.strokeStyle='#fff';shape(ctx,s,b,b,s.width,s.height);ctx.stroke();ctx.setLineDash([line*5,line*5]);ctx.strokeStyle='#baf369';shape(ctx,s,b+s.safe,b+s.safe,s.width-2*s.safe,s.height-2*s.safe);ctx.stroke();ctx.restore();}
+ if(guides){
+  ctx.save();ctx.scale(ctx.canvas.width/d.width,ctx.canvas.height/d.height);
+  const line=d.width/180,inset=line;
+  const outline=(color)=>{ctx.strokeStyle='#171c2b';ctx.lineWidth=line*2;ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=line;ctx.stroke();};
+  ctx.setLineDash([]);shape(ctx,s,inset,inset,d.width-2*inset,d.height-2*inset,b);outline('#ff4fa3');
+  shape(ctx,s,b,b,s.width,s.height);outline('#fff');
+  ctx.setLineDash([line*3,line*2]);ctx.lineCap='round';shape(ctx,s,b+s.safe,b+s.safe,s.width-2*s.safe,s.height-2*s.safe);outline('#baf369');
+  ctx.restore();
+ }
 }
 export function inspectDesign(s,img,measure){
  if(!img)return[{level:'info',text:'上传图片后，自动检查清晰度与文字位置。'}];
