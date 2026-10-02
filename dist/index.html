@@ -14,7 +14,15 @@
 <div class="section-heading divided"><span>02 / 放入喜欢</span><span id="asset-count" class="micro">0 张素材</span></div>
 <button class="upload-box" id="upload-button"><span class="upload-symbol">＋</span><strong>把角色图片放进来</strong><span>拖入或点击上传 PNG / JPG / WebP</span><small>图片留在你的浏览器里</small></button>
 <div id="asset-list" class="asset-list"></div><button id="sample-button" class="text-button">✦ 试试原创示例</button>
-<div class="section-heading divided"><span>03 / 制作规格</span><button id="import-template" class="text-button">导入模板</button></div>
+<div class="section-heading divided"><span>03 / 给喜欢选个风格</span></div>
+<div class="style-list" role="group" aria-label="风格模板">
+<button data-style="plain" class="style-option active"><span class="style-mark">Aa</span><span>自由排版<small>保留你的构图</small></span></button>
+<button data-style="birthday" class="style-option"><span class="style-mark birthday-mark">HBD</span><span>生日应援<small>名字 · 纪念日 · 应援色</small></span></button>
+<button data-style="minimal" class="style-option"><span class="style-mark minimal-mark">NAME</span><span>简洁角色名<small>干净留白与名字</small></span></button>
+<button data-style="retro" class="style-option"><span class="style-mark retro-mark">01</span><span>复古拍立得<small>胶片边框与暖色纸张</small></span></button>
+</div>
+<div id="style-fields" hidden><label>角色名<input id="character-name" type="text" placeholder="例如：星野" maxlength="36"></label><div class="field-pair"><label>生日 / 纪念日<input id="birthday" type="text" placeholder="08.16" maxlength="16"></label><label>应援配色<input id="support-color" type="color" value="#168d80"></label></div><p class="hint">模板文字会自动适配宽度。每款可以使用不同的名字、日期和配色。</p></div>
+<div class="section-heading divided"><span>04 / 制作规格</span><button id="import-template" class="text-button">导入模板</button></div>
 <label>成品预设<select id="preset"></select></label>
 <div class="field-pair"><label>宽度 <span>mm</span><input id="width" type="number" min="10" max="200" step="0.5" value="58"></label><label>高度 <span>mm</span><input id="height" type="number" min="10" max="200" step="0.5" value="58"></label></div>
 <div class="field-pair"><label>出血 <span>mm</span><input id="bleed" type="number" min="0" max="10" step="0.5" value="3"></label><label>安全边距 <span>mm</span><input id="safe" type="number" min="0" max="15" step="0.5" value="3"></label></div>
@@ -22,6 +30,7 @@
 <div class="privacy-note"><span>⌑</span><div>你的喜欢，只留在这里<small>无需注册 · 图片本地处理</small></div></div>
 </aside>
 <section class="center-panel">
+<section class="collection-panel" aria-label="整套制作"><div class="collection-heading"><div><strong>整套制作 <span class="collection-tag">一张图 · 三款谷子</span></strong><p id="collection-status">选好风格，一次生成吧唧、拍立得和贴纸。</p></div><button id="generate-set" class="primary">✦ 生成一整套</button></div><div id="set-gallery" class="set-gallery" hidden></div><div id="set-actions" class="set-actions" hidden><span id="set-editing-label">点击一款，单独调整</span><div><button id="source-view" class="text-button">返回单款</button><button id="export-set" class="primary">下载整套 ZIP</button></div></div></section>
 <div class="canvas-toolbar"><div class="view-switch" role="group" aria-label="画布视图"><button id="edit-view" class="selected">编辑制作稿</button><button id="mock-view">成品预览</button></div><div class="canvas-tools"><button id="fit" title="图片恢复居中">居中适配</button><button id="guides" class="selected" aria-pressed="true">辅助线</button></div></div>
 <div class="canvas-area" id="drop-zone"><div class="canvas-meta"><span id="canvas-label">58 MM BADGE</span><span id="canvas-dpi">300 DPI</span></div><div class="ruler-horizontal"></div><div class="ruler-vertical"></div><div class="artboard-wrap" id="artboard-wrap"><canvas id="editor" width="800" height="800" aria-label="谷子编辑画布：上传图片后拖动调整构图" tabindex="0"></canvas><div id="empty-state"><span>✦</span><h1>把喜欢，做成谷子。</h1><p>放入一张图片，从第一枚吧唧开始。</p><button id="empty-upload" class="primary">选择角色图片</button></div></div><div class="canvas-bottom"><span id="interaction-hint">拖动图片调整构图 · 滚轮缩放 · 方向键微调</span><span id="physical-size">64 × 64 mm（含出血）</span></div></div>
 <div class="below-canvas"><div class="legend"><span><i class="bleed-dot"></i>出血边界</span><span><i class="trim-dot"></i>成品裁切</span><span><i class="safe-dot"></i>安全区域</span></div><span>喜欢的样子，慢慢调就好。</span></div>

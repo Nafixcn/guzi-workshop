@@ -1,5 +1,7 @@
 export const PRESETS={badge:[['58 mm 吧唧',58,58],['75 mm 吧唧',75,75],['44 mm 吧唧',44,44]],photo:[['标准拍立得 · 54 × 86',54,86],['宽幅拍立得 · 86 × 108',86,108]],sticker:[['方形贴纸 · 50 × 50',50,50],['长方形贴纸 · 50 × 70',50,70]]};
-export const defaults=()=>({type:'badge',width:58,height:58,bleed:3,safe:3,scale:100,rotation:0,x:0,y:0,background:'#dff7ee',borderColor:'#ffffff',border:0,caption:'',fontSize:4,textColor:'#173c36',textY:82,dpi:300,quantity:1,paper:'a4',paperWidth:210,paperHeight:297,margin:10,gap:3});
+export const STYLES={plain:{name:'自由排版',support:'#64cbbd',background:'#dff7ee'},birthday:{name:'生日应援',support:'#168d80',background:'#e4f8f2'},minimal:{name:'简洁角色名',support:'#315783',background:'#edf3fa'},retro:{name:'复古拍立得',support:'#a04f43',background:'#eee1ca'}};
+export const TYPE_NAMES={badge:'吧唧',photo:'拍立得',sticker:'贴纸'};
+export const defaults=()=>({type:'badge',width:58,height:58,bleed:3,safe:3,scale:100,rotation:0,x:0,y:0,background:'#dff7ee',borderColor:'#ffffff',border:0,caption:'',fontSize:4,textColor:'#173c36',textY:82,dpi:300,quantity:1,paper:'a4',paperWidth:210,paperHeight:297,margin:10,gap:3,style:'plain',characterName:'',birthday:'',supportColor:'#64cbbd'});
 export const mmToPx=(mm,dpi)=>Math.round(mm*dpi/25.4);
 export function validateSettings(input){
  const s={...defaults(),...input};
@@ -10,8 +12,12 @@ export function validateSettings(input){
  if(!['a4','custom'].includes(s.paper))throw Error('纸张类型无效');
  if(s.type==='badge'&&s.width!==s.height)throw Error('圆形吧唧的宽高必须相同');
  if(s.safe*2>=Math.min(s.width,s.height)||s.border*2>=Math.min(s.width,s.height))throw Error('边距或边框不能超过成品尺寸的一半');
- for(const k of ['background','borderColor','textColor'])if(!/^#[0-9a-f]{6}$/i.test(s[k]))throw Error('颜色格式无效');
+ for(const k of ['background','borderColor','textColor','supportColor'])if(!/^#[0-9a-f]{6}$/i.test(s[k]))throw Error('颜色格式无效');
  if(typeof s.caption!=='string'||s.caption.length>100)throw Error('文字最多 100 个字符');
+ if(!Object.hasOwn(STYLES,s.style))throw Error('风格模板无效');
+ if(typeof s.characterName!=='string'||s.characterName.length>36)throw Error('角色名最多 36 个字符');
+ if(typeof s.birthday!=='string'||s.birthday.length>16)throw Error('纪念日期最多 16 个字符');
+ if(s.type==='photo'&&(s.width<=6||s.height<=17))throw Error('拍立得高度需要大于 17 mm');
  return s;
 }
 export function dimensions(s,bleed=true){return{width:s.width+(bleed?s.bleed*2:0),height:s.height+(bleed?s.bleed*2:0)}};
@@ -25,14 +31,27 @@ export function layoutSheet(s,count){
  return{paperWidth:pw,paperHeight:ph,cols,rows,capacity,pages,positions};
 }
 function shape(ctx,s,x,y,w,h,outer=0){ctx.beginPath();if(s.type==='badge'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}else{const r=s.type==='sticker'?Math.min(3+outer,w/4,h/4):0;ctx.roundRect(x,y,w,h,r);} }
+export function applyStyle(s,style){if(!Object.hasOwn(STYLES,style))throw Error('风格模板无效');const palette=STYLES[style];return validateSettings({...s,style,supportColor:palette.support,background:palette.background,border:style==='plain'?0:style==='retro'?.5:1,borderColor:style==='retro'?'#f5ead7':'#ffffff',textY:s.type==='photo'?91:87});}
+export function imageFrame(s,bleed=true){const b=bleed?s.bleed:0,d=dimensions(s,bleed);return s.type==='photo'?{x:b+3,y:b+3,w:s.width-6,h:s.height-17}:{x:0,y:0,w:d.width,h:d.height};}
+export function prepareSetSpecs(input,img){const source=validateSettings(input),srcFrame=imageFrame(source),factor=img?Math.max(srcFrame.w/img.width,srcFrame.h/img.height)*source.scale/100:1;
+ return ['badge','photo','sticker'].map(type=>{const[,width,height]=PRESETS[type][0];const s={...source,type,width:type===source.type?source.width:width,height:type===source.type?source.height:height,textY:type==='photo'?91:87,safe:Math.min(source.safe,width/4,height/4),border:Math.min(source.border,width/4,height/4)};const frame=imageFrame(s),newFactor=img?Math.max(frame.w/img.width,frame.h/img.height)*s.scale/100:1;s.x=Math.max(-100,Math.min(100,source.x*source.width/s.width*newFactor/factor));s.y=Math.max(-100,Math.min(100,source.y*source.height/s.height*newFactor/factor));if(type===source.type)s.textY=source.textY;return validateSettings(s);});}
+function safeTextWidth(s,y,size){if(s.type!=='badge')return Math.max(0,s.width-2*s.safe-2);const r=s.width/2-s.safe,dy=Math.abs(y-s.height/2)+size*.6;return dy>=r?0:2*Math.sqrt(r*r-dy*dy)-2;}
+function themeRows(s){if(!s.style||s.style==='plain')return[];const photo=s.type==='photo',base=Math.min(s.width,s.height);if(s.style==='birthday')return[{text:'HAPPY BIRTHDAY',y:photo?s.height-13:s.height*.17,size:base*.045},{text:s.characterName,y:photo?s.height-8:s.height*.76,size:base*.082},{text:s.birthday,y:photo?s.height-3.8:s.height*.86,size:base*.043}];if(s.style==='minimal')return[{text:s.characterName,y:photo?s.height-7:s.height*.83,size:base*.08}];return[{text:'MEMORIES',y:photo?s.height-12.3:s.height*.18,size:base*.04},{text:s.characterName,y:photo?s.height-7.6:s.height*.79,size:base*.075},{text:s.birthday,y:photo?s.height-3.6:s.height*.89,size:base*.038}];}
+function renderTheme(ctx,s,b){if(!s.style||s.style==='plain')return;ctx.save();ctx.translate(b,b);const w=s.width,h=s.height,base=Math.min(w,h),photo=s.type==='photo';
+ if(!photo){const y=s.style==='minimal'?h*.74:h*.66;ctx.fillStyle=s.style==='retro'?'#f5ead7':'#ffffffeb';ctx.fillRect(0,y,w,h-y+s.bleed);ctx.fillStyle=s.supportColor;ctx.fillRect(w*.13,y,w*.74,base*.009);}
+ if(s.style==='birthday'&&!photo){ctx.fillStyle=s.supportColor;const chipW=w*.58,chipH=base*.07;ctx.beginPath();ctx.roundRect((w-chipW)/2,h*.17-chipH/2,chipW,chipH,chipH/2);ctx.fill();}
+ if(s.style==='retro'){ctx.strokeStyle=s.supportColor;ctx.lineWidth=.25;if(!photo){shape(ctx,s,1.5,1.5,w-3,h-3);ctx.stroke();}ctx.fillStyle=s.supportColor;for(let i=0;i<8;i++){const x=photo?1.1:w*.07,y=photo?4+i*(h-10)/8:h*.26+i*h*.04;ctx.fillRect(x,y,.6,1.3);if(photo)ctx.fillRect(w-1.7,y,.6,1.3);}}
+ for(const row of themeRows(s)){if(!row.text)continue;const max=safeTextWidth(s,row.y,row.size);if(max<=0)continue;ctx.font=`${s.style==='retro'?500:700} ${row.size}px system-ui,sans-serif`;const width=ctx.measureText(row.text).width,size=width>max?row.size*max/width:row.size;ctx.font=`${s.style==='retro'?500:700} ${size}px system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=s.style==='birthday'&&!photo&&row.text==='HAPPY BIRTHDAY'?'#ffffff':s.supportColor;ctx.fillText(row.text,w/2,row.y);}
+ ctx.restore();}
 export function renderDesign(ctx,s,img,{guides=false,bleed=true}={}){
  const d=dimensions(s,bleed),b=bleed?s.bleed:0;
  ctx.save();ctx.scale(ctx.canvas.width/d.width,ctx.canvas.height/d.height);
- shape(ctx,s,0,0,d.width,d.height,b);ctx.clip();ctx.fillStyle=s.type==='photo'?'#fff':s.background;ctx.fillRect(0,0,d.width,d.height);
- const frame=s.type==='photo'?{x:b+3,y:b+3,w:s.width-6,h:s.height-17}:{x:0,y:0,w:d.width,h:d.height};
+ shape(ctx,s,0,0,d.width,d.height,b);ctx.clip();ctx.fillStyle=s.type==='photo'?(s.style==='retro'?'#f5ead7':'#fff'):s.background;ctx.fillRect(0,0,d.width,d.height);
+ const frame=imageFrame(s,bleed);
  ctx.save();ctx.beginPath();ctx.rect(frame.x,frame.y,frame.w,frame.h);ctx.clip();ctx.fillStyle=s.background;ctx.fillRect(frame.x,frame.y,frame.w,frame.h);
  if(img){const factor=Math.max(frame.w/img.width,frame.h/img.height)*s.scale/100;ctx.translate(frame.x+frame.w/2+s.x*s.width/100,frame.y+frame.h/2+s.y*s.height/100);ctx.rotate(s.rotation*Math.PI/180);ctx.drawImage(img,-img.width*factor/2,-img.height*factor/2,img.width*factor,img.height*factor);}
  ctx.restore();
+ renderTheme(ctx,s,b);
  if(s.border>0){ctx.save();ctx.lineWidth=s.border;ctx.strokeStyle=s.borderColor;shape(ctx,s,b+s.border/2,b+s.border/2,s.width-s.border,s.height-s.border);ctx.stroke();ctx.restore();}
  if(s.caption){ctx.font=`600 ${s.fontSize}px "Noto Sans SC",system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=s.textColor;ctx.fillText(s.caption,b+s.width/2,b+s.height*s.textY/100);}
  ctx.restore();
@@ -40,13 +59,14 @@ export function renderDesign(ctx,s,img,{guides=false,bleed=true}={}){
 }
 export function inspectDesign(s,img,measure){
  if(!img)return[{level:'info',text:'上传图片后，自动检查清晰度与文字位置。'}];
- const d=dimensions(s);const w=s.type==='photo'?s.width-6:d.width,h=s.type==='photo'?s.height-17:d.height;
+ const {w,h}=imageFrame(s);
  const factor=Math.max(w/img.width,h/img.height)*s.scale/100,effectiveDpi=25.4/factor;
  const checks=[{level:effectiveDpi>=s.dpi?'good':'warn',text:`图片有效清晰度 ${Math.round(effectiveDpi)} DPI${effectiveDpi<s.dpi?'，低于导出目标':''}`}];
  if(s.caption){const tw=measure(s.caption,s.fontSize),halfH=s.fontSize*.6,cx=s.width/2,cy=s.height*s.textY/100;let ok;
  if(s.type==='badge'){const r=s.width/2-s.safe;ok=[-1,1].every(dx=>[-1,1].every(dy=>(dx*tw/2)**2+(cy-s.height/2+dy*halfH)**2<=r*r));}
  else ok=cx-tw/2>=s.safe&&cx+tw/2<=s.width-s.safe&&cy-halfH>=s.safe&&cy+halfH<=s.height-s.safe;
  checks.push({level:ok?'good':'warn',text:ok?'文字位于安全区域内':'文字超出安全区域，请缩小字号或调整位置'});}
+ if(s.style!=='plain'){if(!s.characterName)checks.push({level:'info',text:'填写角色名，让模板更完整'});if(s.style==='birthday'&&!s.birthday)checks.push({level:'info',text:'可填写角色生日或纪念日'});if(themeRows(s).some(row=>row.text&&safeTextWidth(s,row.y,row.size)<=0))checks.push({level:'warn',text:'模板文字没有足够的安全空间，请减小安全边距或增大尺寸'});}
  checks.push({level:'info',text:'人脸与主体裁切请在画布上自行确认'});return checks;
 }
 export function createCanvas(s,img,options={}){const d=dimensions(s,options.bleed!==false);const canvas=document.createElement('canvas');canvas.width=mmToPx(d.width,s.dpi);canvas.height=mmToPx(d.height,s.dpi);if(canvas.width*canvas.height>24000000)throw Error('导出尺寸过大，请降低 DPI');renderDesign(canvas.getContext('2d'),s,img,options);return canvas;}
