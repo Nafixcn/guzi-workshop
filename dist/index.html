@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#151b22"><meta name="description" content="吧唧、拍立得与贴纸排版。图片在本地处理，一键导出制作稿与拼版。"><title>谷子工坊 · 把喜欢做成谷子</title><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="./" aria-label="谷子工坊首页"><span class="brand-icon">✦</span><span>谷子工坊<small>GUZI STUDIO</small></span></a><span class="project-name">我的第一份谷子 <span class="local-pill">本地工作台</span></span><div class="header-actions"><span id="save-state">仅保存在此设备</span><button id="load-project" class="quiet">打开项目</button><button id="save-project" class="quiet">保存项目</button><button id="export-top" class="primary">导出作品 <span>↗</span></button></div></header>
+<main class="workspace">
+<aside class="left-panel panel">
+<div class="section-heading"><span>01 / 选个谷子</span><span class="micro">MAKE SOMETHING YOU LOVE</span></div>
+<div class="template-list" role="group" aria-label="谷子类型">
+<button class="template active" data-template="badge"><span class="type-shape circle"></span><span>吧唧<small>圆形徽章</small></span><span class="template-check">✓</span></button>
+<button class="template" data-template="photo"><span class="type-shape photo"></span><span>拍立得<small>留住这一帧</small></span><span class="template-check">✓</span></button>
+<button class="template" data-template="sticker"><span class="type-shape sticker"></span><span>贴纸<small>圆角方形</small></span><span class="template-check">✓</span></button>
+</div>
+<div class="section-heading divided"><span>02 / 放入喜欢</span><span id="asset-count" class="micro">0 张素材</span></div>
+<button class="upload-box" id="upload-button"><span class="upload-symbol">＋</span><strong>把角色图片放进来</strong><span>拖入或点击上传 PNG / JPG / WebP</span><small>图片留在你的浏览器里</small></button>
+<div id="asset-list" class="asset-list"></div><button id="sample-button" class="text-button">✦ 试试原创示例</button>
+<div class="section-heading divided"><span>03 / 制作规格</span><button id="import-template" class="text-button">导入模板</button></div>
+<label>成品预设<select id="preset"></select></label>
+<div class="field-pair"><label>宽度 <span>mm</span><input id="width" type="number" min="10" max="200" step="0.5" value="58"></label><label>高度 <span>mm</span><input id="height" type="number" min="10" max="200" step="0.5" value="58"></label></div>
+<div class="field-pair"><label>出血 <span>mm</span><input id="bleed" type="number" min="0" max="10" step="0.5" value="3"></label><label>安全边距 <span>mm</span><input id="safe" type="number" min="0" max="15" step="0.5" value="3"></label></div>
+<p class="hint">制作前请按厂家的模板确认尺寸。默认规格适合试排版。</p>
+<div class="privacy-note"><span>⌑</span><div>你的喜欢，只留在这里<small>无需注册 · 图片本地处理</small></div></div>
+</aside>
+<section class="center-panel">
+<div class="canvas-toolbar"><div class="view-switch" role="group" aria-label="画布视图"><button id="edit-view" class="selected">编辑制作稿</button><button id="mock-view">成品预览</button></div><div class="canvas-tools"><button id="fit" title="图片恢复居中">居中适配</button><button id="guides" class="selected" aria-pressed="true">辅助线</button></div></div>
+<div class="canvas-area" id="drop-zone"><div class="canvas-meta"><span id="canvas-label">58 MM BADGE</span><span id="canvas-dpi">300 DPI</span></div><div class="ruler-horizontal"></div><div class="ruler-vertical"></div><div class="artboard-wrap" id="artboard-wrap"><canvas id="editor" width="800" height="800" aria-label="谷子编辑画布：上传图片后拖动调整构图" tabindex="0"></canvas><div id="empty-state"><span>✦</span><h1>把喜欢，做成谷子。</h1><p>放入一张图片，从第一枚吧唧开始。</p><button id="empty-upload" class="primary">选择角色图片</button></div></div><div class="canvas-bottom"><span id="interaction-hint">拖动图片调整构图 · 滚轮缩放 · 方向键微调</span><span id="physical-size">64 × 64 mm（含出血）</span></div></div>
+<div class="below-canvas"><div class="legend"><span><i class="bleed-dot"></i>出血边界</span><span><i class="trim-dot"></i>成品裁切</span><span><i class="safe-dot"></i>安全区域</span></div><span>喜欢的样子，慢慢调就好。</span></div>
+<section class="check-panel"><div><span class="check-icon">✓</span><strong>制作前检查</strong><span id="check-summary" class="micro">等待图片</span></div><ul id="checks"><li>上传图片后，自动检查清晰度与文字位置。</li></ul></section>
+</section>
+<aside class="right-panel panel">
+<div class="section-heading"><span>画面调整</span><button id="undo" class="text-button" disabled>撤销</button></div>
+<label class="range-label">图片缩放 <output id="scale-value">100%</output><input id="scale" type="range" min="50" max="400" value="100" step="1"></label>
+<label class="range-label">旋转 <output id="rotation-value">0°</output><input id="rotation" type="range" min="-180" max="180" value="0" step="1"></label>
+<div class="field-pair"><label>水平位置 <span>%</span><input id="offset-x" type="number" min="-100" max="100" value="0"></label><label>垂直位置 <span>%</span><input id="offset-y" type="number" min="-100" max="100" value="0"></label></div>
+<div class="section-heading divided"><span>背景与边框</span></div>
+<div class="color-row"><label>背景<input id="background" type="color" value="#dff7ee"></label><label>边框<input id="border-color" type="color" value="#ffffff"></label></div>
+<label class="range-label">边框宽度 <output id="border-value">0 mm</output><input id="border" type="range" min="0" max="6" step="0.25" value="0"></label>
+<div class="swatches" aria-label="背景色预设"><button data-color="#dff7ee" style="--swatch:#dff7ee" aria-label="薄荷绿"></button><button data-color="#ffe99c" style="--swatch:#ffe99c" aria-label="柠檬黄"></button><button data-color="#ffcddd" style="--swatch:#ffcddd" aria-label="樱花粉"></button><button data-color="#d9e8ff" style="--swatch:#d9e8ff" aria-label="晴空蓝"></button><button data-color="#ffffff" style="--swatch:#fff" aria-label="白色"></button><button data-color="#1f2937" style="--swatch:#1f2937" aria-label="深灰"></button></div>
+<div class="section-heading divided"><span>加一句喜欢</span></div>
+<label class="sr-only" for="caption">作品文字</label><input id="caption" type="text" placeholder="角色名、台词，或者你的心情" maxlength="100">
+<div class="field-pair"><label>字号 <span>mm</span><input id="font-size" type="number" value="4" min="1" max="20" step="0.5"></label><label>文字颜色<input id="text-color" type="color" value="#173c36"></label></div>
+<label class="range-label">文字位置 <output id="text-y-value">82%</output><input id="text-y" type="range" min="0" max="100" value="82"></label>
+<div class="section-heading divided"><span>导出设置</span><span class="micro">READY TO MAKE</span></div>
+<div class="field-pair"><label>分辨率<select id="dpi"><option value="300">300 DPI</option><option value="600">600 DPI</option><option value="150">150 DPI · 草稿</option></select></label><label>每款数量<input id="quantity" type="number" value="1" min="1" max="100"></label></div>
+<label>拼版纸张<select id="paper"><option value="a4">A4 · 210 × 297 mm</option><option value="custom">自定义纸张</option></select></label>
+<div id="custom-paper" class="field-pair" hidden><label>纸宽 <span>mm</span><input id="paper-width" type="number" value="210" min="50" max="500"></label><label>纸高 <span>mm</span><input id="paper-height" type="number" value="297" min="50" max="500"></label></div>
+<div class="field-pair"><label>纸张边距 <span>mm</span><input id="margin" type="number" min="0" max="30" value="10"></label><label>谷子间距 <span>mm</span><input id="gap" type="number" min="0" max="20" value="3"></label></div>
+<button id="export-png" class="primary wide">导出当前制作稿 <span>PNG</span></button><div class="export-pair"><button id="export-pdf">拼版 PDF</button><button id="export-batch">全部素材 ZIP</button></div><button id="export-preview" class="text-button wide">下载成品预览图</button><p class="hint export-hint">制作稿无辅助线 · RGB 色彩<br>预览效果仅供参考，不代表实物。</p>
+</aside>
+</main><footer><span>✦ 谷子工坊 <small>MADE FOR YOUR FAVORITES</small></span><span id="project-status">支持 PNG / JPG / WebP · 本地处理</span><button id="new-project" class="text-button">新建项目</button></footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden><input id="project-input" type="file" accept=".json,.guzi" hidden><input id="template-input" type="file" accept="application/json,.json" hidden>
+<script type="module" src="app.js"></script>
+</body></html>

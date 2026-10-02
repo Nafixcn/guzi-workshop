@@ -1,0 +1,16 @@
+import {createRequire} from 'node:module';
+import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {join} from 'node:path';
+import {defaults,createCanvas,pngBytes,makeZip,makePdf,layoutSheet,makePreview} from '../dist/engine.js';
+const require=createRequire(join(process.env.GUZI_NODE_MODULES,'package.json'));
+const {createCanvas:nativeCanvas,ImageData}=require('@napi-rs/canvas'),sharp=require('sharp'),JSZip=require('jszip'),{PDFDocument}=require('pdf-lib');
+globalThis.document={createElement(){const c=nativeCanvas(1,1);c.toBlob=(cb,type)=>cb(new Blob([c.toBuffer(type==='image/jpeg'?'image/jpeg':'image/png')],{type}));return c;}};
+const directory=await mkdtemp('/private/tmp/guzi-export-qa-'),raw=await sharp(await readFile(new URL('../dist/sample.png',import.meta.url))).ensureAlpha().raw().toBuffer({resolveWithObject:true}),image=nativeCanvas(raw.info.width,raw.info.height),s={...defaults(),y:8,caption:'STARLIGHT',fontSize:3};image.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(raw.data),raw.info.width,raw.info.height),0,0);
+const files=[];
+for(const type of ['badge','photo','sticker']){const spec={...s,type,width:type==='photo'?54:58,height:type==='photo'?86:58};const c=createCanvas(spec,image),bytes=await pngBytes(c,300),meta=await sharp(bytes).metadata();assert.equal(meta.density,300);assert.equal(meta.width,Math.round((spec.width+6)*300/25.4));assert.equal(meta.height,Math.round((spec.height+6)*300/25.4));const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height);if(type!=='photo')assert.equal(pixels.data[3],0);assert.equal(pixels.data[((Math.floor(c.height/2)*c.width+Math.floor(c.width/2))*4)+3],255);await writeFile(join(directory,`${type}.png`),bytes);files.push({name:`${type}.png`,data:bytes});}
+const zipBytes=new Uint8Array(await makeZip(files).arrayBuffer());const zip=await JSZip.loadAsync(zipBytes,{checkCRC32:true});assert.equal(Object.keys(zip.files).length,3);assert.deepEqual(await zip.file('badge.png').async('uint8array'),files[0].data);await writeFile(join(directory,'batch.zip'),zipBytes);
+const layout=layoutSheet(s,13),pages=[];
+for(let p=0;p<layout.pages;p++){const sheet=nativeCanvas(2480,3508),ctx=sheet.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,2480,3508);for(const pos of layout.positions.filter(i=>i.page===p)){const art=createCanvas(s,image);ctx.drawImage(art,pos.x*300/25.4,pos.y*300/25.4,64*300/25.4,64*300/25.4);}pages.push({width:2480,height:3508,bytes:new Uint8Array(sheet.toBuffer('image/jpeg'))});}
+const pdfBytes=new Uint8Array(await makePdf(pages,210,297).arrayBuffer()),pdf=await PDFDocument.load(pdfBytes);assert.equal(pdf.getPageCount(),2);const size=pdf.getPage(0).getSize();assert.ok(Math.abs(size.width-210*72/25.4)<.001);assert.ok(Math.abs(size.height-297*72/25.4)<.001);await writeFile(join(directory,'sheet.pdf'),pdfBytes);const preview=makePreview(s,image);await writeFile(join(directory,'preview.png'),preview.toBuffer('image/png'));
+console.log(JSON.stringify({directory,png:{width:756,height:756,dpi:300},zipFiles:3,pdfPages:2,pdfMm:[210,297],status:'passed'}));
