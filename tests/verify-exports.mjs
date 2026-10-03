@@ -2,11 +2,12 @@ import {createRequire} from 'node:module';
 import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {join} from 'node:path';
+import {tmpdir} from 'node:os';
 import {defaults,createCanvas,pngBytes,makeZip,makePdf,layoutSheet,makePreview,applyStyle,prepareSetSpecs,renderDesign} from '../dist/engine.js';
-const require=createRequire(join(process.env.GUZI_NODE_MODULES,'package.json'));
+const require=createRequire(process.env.GUZI_NODE_MODULES?join(process.env.GUZI_NODE_MODULES,'package.json'):import.meta.url);
 const {createCanvas:nativeCanvas,ImageData}=require('@napi-rs/canvas'),sharp=require('sharp'),JSZip=require('jszip'),{PDFDocument}=require('pdf-lib');
 globalThis.document={createElement(){const c=nativeCanvas(1,1);c.toBlob=(cb,type)=>cb(new Blob([c.toBuffer(type==='image/jpeg'?'image/jpeg':'image/png')],{type}));return c;}};
-const directory=await mkdtemp('/private/tmp/guzi-export-qa-'),raw=await sharp(await readFile(new URL('../dist/sample.png',import.meta.url))).ensureAlpha().raw().toBuffer({resolveWithObject:true}),image=nativeCanvas(raw.info.width,raw.info.height),s={...defaults(),y:8,caption:'STARLIGHT',fontSize:3};image.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(raw.data),raw.info.width,raw.info.height),0,0);
+const directory=await mkdtemp(join(tmpdir(),'guzi-export-qa-')),raw=await sharp(await readFile(new URL('../dist/sample.png',import.meta.url))).ensureAlpha().raw().toBuffer({resolveWithObject:true}),image=nativeCanvas(raw.info.width,raw.info.height),s={...defaults(),y:8,caption:'STARLIGHT',fontSize:3};image.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(raw.data),raw.info.width,raw.info.height),0,0);
 const files=[];
 // 10 px/mm geometry: only a one-level raster rounding difference is allowed, never a new image fit.
 for(const type of ['badge','photo','sticker']){const spec={...defaults(),type,width:type==='photo'?54:58,height:type==='photo'?86:58,x:12,y:8,rotation:11},full=nativeCanvas((spec.width+6)*10,(spec.height+6)*10),trim=nativeCanvas(spec.width*10,spec.height*10);renderDesign(full.getContext('2d'),spec,image);renderDesign(trim.getContext('2d'),spec,image,{crop:true});const a=full.getContext('2d').getImageData(30+spec.width*5-30,30+spec.height*5-30,60,60).data,b=trim.getContext('2d').getImageData(spec.width*5-30,spec.height*5-30,60,60).data;assert.ok(a.every((v,i)=>Math.abs(v-b[i])<=1),`${type} crop preserves original composition`);}
