@@ -1,3 +1,18 @@
 node_modules/
 .DS_Store
 .sites-runtime/
+
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local artwork projects, generated exports and logs
+*.guzi
+exports/
+*.zip
+*.tar.gz
+*.log
+coverage/

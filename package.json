@@ -1,1 +1,20 @@
-{"name":"guzi-workshop","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node server.mjs","test":"node --test tests/*.test.mjs","check":"node --check dist/app.js && node --check dist/engine.js"}}
+{
+  "name": "guzi-workshop",
+  "version": "0.1.1",
+  "description": "Local-first anime merch layout editor for badges, photo cards and stickers.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nafixcn/guzi-workshop.git"
+  },
+  "bugs": { "url": "https://github.com/Nafixcn/guzi-workshop/issues" },
+  "keywords": ["anime", "merch", "badge", "canvas", "local-first"],
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check dist/app.js && node --check dist/engine.js"
+  }
+}
